@@ -4,6 +4,7 @@ from Tkinter import Tk, Listbox, Button, Scrollbar, Canvas, Frame, Label
 from subprocess import call
 from threading import Thread
 import os, tkMessageBox
+from time import sleep
 
 class MergeApp:
     
