@@ -4,6 +4,7 @@ from Tkinter import Tk, Listbox, Button, Scrollbar, Canvas, Frame, Label
 from subprocess import call
 from threading import Thread
 import os, tkMessageBox
+from time import sleep
 
 class MergeApp:
     
@@ -15,12 +16,16 @@ class MergeApp:
         self.movieListBox = Listbox(self.root)
         self.scrollBar = Scrollbar(self.root)
         self.startButton = Button(self.root, text = "start", state = "disable", command = self.startMerging)
-        self.cancelButton = Button(self.root, text = "Cancel", state = "disable", command = self.stopMerging)
+        self.cancelButton = Button(self.root, text = "Stop", state = "disable", command = self.stopMerging)
         self.finishButton = Button(self.root, text = "Exit", state = "normal", command = self.endApplication)
+        self.loadingLabel = Label(self.root)
         self.processState = Label(self.root)
         self.movieMap = {}
         self.keyList = []
+        self.loadingIcons = ["--", "\\", "|", "/"]
         self.wantToMerge = True
+        self.loading = False
+        self.warningMessageLoaded = False
         
     def start(self):
         screen_width = self.root.winfo_screenwidth()
@@ -39,6 +44,7 @@ class MergeApp:
         self.cancelButton.pack(fill = "x")
         self.finishButton.pack(fill = "x")
         self.processState.pack(fill = "x", side = "bottom")        
+        self.loadingLabel.pack(fill = "x", side = "bottom")
         Thread(target = self.createMovieMap).start()
         self.mainThread = Thread(target = self.startMerge)
         self.root.protocol("WM_DELETE_WINDOW", self.ifCloseWindow)
@@ -47,6 +53,7 @@ class MergeApp:
     def createMovieMap(self):
         #Looking for subtitle
         index = 0
+        Thread(target = self.startLoading, args = (True, )).start()
         self.processState.config(text = "Searching Videos..")
         for oneWalk in os.walk(os.getcwd()):
             for fileName in oneWalk[2]:
@@ -68,15 +75,18 @@ class MergeApp:
                                         index += 1
         self.startButton.config(state = "normal")
         self.processState.config(text = "Search Complete.")
-                                        
+        self.loading = False
+        
     def startMerge(self):
         self.changeButtonState()
         for key, value in self.movieMap.iteritems():
             if self.wantToMerge:
                 self.processState.config(text = "Merging Video..")
+                Thread(target = self.startLoading, args = (True, )).start()
                 index = self.keyList.index(key)
                 self.movieListBox.delete(index)
                 self.movieListBox.insert(index, " Merging - " + key)
+                self.movieListBox.itemconfig(index, bg = "yellow")
                 if (call(["mkvmerge", "-o", value['moviePath'] + "/merging", value['movieUri'], value['subtitleUri']]) == 0):
                     call(["rm", value['movieUri'], value['subtitleUri']])
                     call(["mv", value['moviePath'] + "/merging", value['moviePath'] + "/"+ key + ".mkv"])
@@ -92,10 +102,18 @@ class MergeApp:
                     self.movieListBox.itemconfig(index, bg = "red", foreground = "white")
             else:
                 break
+        self.loading = False
        	self.cancelButton.config(state = "disable")
        	self.finishButton.config(state = "normal")
         if self.wantToMerge:
             self.processState.config(text = "Merge Complete.")
+            
+    def startLoading(self, loadOrNot):
+        self.loading = loadOrNot
+        while self.loading:
+            for icon in self.loadingIcons:
+                self.loadingLabel.config(text = icon)
+                sleep(.2)
                 
     def startMerging(self):
         self.mainThread.start()
@@ -111,7 +129,9 @@ class MergeApp:
         self.cancelButton.config(state = "disable")
         self.finishButton.config(state = "normal")
         self.processState.config(text = "Merge Canceled.")
-        tkMessageBox.showwarning(self.messageBoxTitle, self.cancelWarning)
+        if not self.warningMessageLoaded:
+            tkMessageBox.showwarning(self.messageBoxTitle, self.cancelWarning)
+            self.warningMessageLoaded = True
        
     def endApplication(self):
         self.root.destroy()
