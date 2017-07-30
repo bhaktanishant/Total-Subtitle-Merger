@@ -1,4 +1,4 @@
-# Batch-Subtitle-Merger
+# Total-Subtitle-Merger
 A script with GUI to Merge all subtitle with their releted video in the folder and subfolder at once. You can use it as nautilus script if you are ubuntu user.
 ## Rquirement
 * Linux (Don't know if it will work on Windows/Mac or not)
