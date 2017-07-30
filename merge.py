@@ -12,7 +12,7 @@ class MergeApp:
         self.root = root
         self.title = "Subtitle Merger By - Nishant Bhakta"
         self.messageBoxTitle = "Message Box"
-        self.cancelWarning = "The video which has been started to merge will be merge. Rest will be cancel."
+        self.cancelWarning = "The video which has been started to merge will be merge, rest will be cancel."
         self.movieListBox = Listbox(self.root)
         self.scrollBar = Scrollbar(self.root)
         self.startButton = Button(self.root, text = "start", state = "disable", command = self.startMerging)
